@@ -41,8 +41,8 @@ class Sanitize_Command extends WP_CLI_Command {
   {
     $count = self::replace_content($args,$assoc_args);
 
-    if ( $assoc_args['dry-run'] ) 
-      WP_CLI::success("Found {$count} attachments to.");
+    if ( isset($assoc_args['dry-run']) ) 
+      WP_CLI::success("Found {$count} attachments to replace.");
     else
       WP_CLI::success("Replaced {$count} attachments.");
   }
@@ -72,100 +72,113 @@ class Sanitize_Command extends WP_CLI_Command {
       if ( $assoc_args['verbose'] )
         WP_CLI::line("Processing upload (ID:".$upload->ID."): {$upload->guid}");
 
-      foreach ($upload->$guid["_wp_attached_file"] as $index => $file) {
 
-        $full_path = $path.'/'.$file;
-        
-        $ascii_file = Sanitizer::remove_accents($file);
+      $ascii_guid = Sanitizer::remove_accents($upload->guid);      
+      
+      // Replace all files and content if file is different after removing accents
+      if ($ascii_guid != $upload->guid ) {
+        WP_CLI::line("----> File will be sanitized...");
 
-        $ascii_guid = Sanitizer::remove_accents($upload->guid);
-        
-        $ascii_full_path = $path.'/'.$ascii_file;
-        // This replaces main file
-        if ( $file != $ascii_file || $ascii_guid != $upload->guid ) {
-          if ( $assoc_args['verbose'] )
-            WP_CLI::line(" ---> Replacing to: {$ascii_full_path}");
-          $replaced_count+= 1;
+        $replaced_count+= 1;
 
-          // Move the file and replace database
-          if (! $assoc_args['dry-run'] ) :
-            rename($full_path, $ascii_full_path);
+        /**
+         * Replace this file in all post content
+         * Attachment in post content is only rarely file.jpg
+         * More ofter it's like file-800x500.jpg
+         * Only search for the file basename like /wp-content/uploads/2017/01/file without extension
+         */
+        $file_info = pathinfo($upload->guid);
 
-            // Check filename without extension so we can replace all thumbnail sizes at once
-            $attachment_string = $file_info['dirname'].'/'.$file_info['filename'];
-            $escaped_attachment_string = Sanitizer::remove_accents($attachment_string);
+        // Check filename without extension so we can replace all thumbnail sizes at once
+        $attachment_string = $file_info['dirname'].'/'.$file_info['filename'];
+        $escaped_attachment_string = Sanitizer::remove_accents($attachment_string);
 
-            // DB Replace post_content
-            // We don't need to replace excerpt for example since it doesn't have attachments...
-            WP_CLI::line("Replacing attachment {$upload->ID} from {$wpdb->prefix}posts and {$wpdb->prefix}postmeta...");
-            $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}posts SET post_content = REPLACE (post_content, '%s', '%s') WHERE post_content LIKE '%s';",
-              $attachment_string,
-              $escaped_attachment_string,
-              '%'.$wpdb->esc_like($attachment_string).'%'
-            );
+        // DB Replace post_content
+        // We don't need to replace excerpt for example since it doesn't have attachments...
+        WP_CLI::line("Replacing attachment {$file_info['basename']} from {$wpdb->prefix}posts and {$wpdb->prefix}postmeta...");
+        $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}posts SET post_content = REPLACE (post_content, '%s', '%s') WHERE post_content LIKE '%s';",
+          $attachment_string,
+          $escaped_attachment_string,
+          '%'.$wpdb->esc_like($attachment_string).'%'
+        );
+        WP_CLI::line("RUNNING SQL: {$sql}");
+
+        if (! isset($assoc_args['dry-run']) )
             $wpdb->query($sql);
-            WP_CLI::line("RUNNING SQL: {$sql}");
 
-            // DB Replace post meta except attachment meta because we do attachments later
-            $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}postmeta SET meta_value = REPLACE (meta_value, '%s', '%s') WHERE meta_value LIKE '%s' AND meta_key!='_wp_attachment_metadata' AND meta_key!='_wp_attached_file';",
-              $attachment_string,
-              $escaped_attachment_string,
-              '%'.$wpdb->esc_like($attachment_string).'%'
-            );
-            $wpdb->query($sql);
-            WP_CLI::line("RUNNING SQL: {$sql}");
-          endif;
+        // DB Replace post meta except attachment meta because we do attachments later
+        $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}postmeta SET meta_value = REPLACE (meta_value, '%s', '%s') WHERE meta_value LIKE '%s' AND meta_key!='_wp_attachment_metadata' AND meta_key!='_wp_attached_file';",
+          $attachment_string,
+          $escaped_attachment_string,
+          '%'.$wpdb->esc_like($attachment_string).'%'
+        );
+        WP_CLI::line("RUNNING SQL: {$sql}");
 
-          // Replace thumbnails too
-          $file_path = dirname($full_path);
-          $metadata = unserialize($upload->$guid['_wp_attachment_metadata'][$index]);
+        if (! isset($assoc_args['dry-run']) )
+          $wpdb->query($sql);
 
-          // Correct main file
-          $metadata['file'] = $ascii_file;
 
-          // Usually this is image but if this is document instead it won't have different sizes
-          if (isset($metadata['sizes'])) {
-            foreach ($metadata['sizes'] as $name => $thumbnail) {
-              $metadata['sizes'][$name]['file'];
-              $thumbnail_path = $file_path.'/'.$thumbnail['file'];
 
-              $ascii_thumbnail = Sanitizer::remove_accents($thumbnail['file']);
+        $full_path = get_attached_file($upload->ID);
+        $ascii_full_path = Sanitizer::remove_accents($full_path);
 
-              // Update metadata on thumbnail so we can push it back to database
-              $metadata['sizes'][$name]['file'] = $ascii_thumbnail;
+        // Move the file
+        if ( $assoc_args['verbose'] )
+          WP_CLI::line("----> Replacing image:     {$ascii_full_path}");
+        if (! isset($assoc_args['dry-run']) )
+          rename($full_path, $ascii_full_path);
 
-              $ascii_thumbnail_path = $file_path.'/'.$ascii_thumbnail;
-              if ( $assoc_args['verbose'] )
-                WP_CLI::line("Processing thumbnail: {$thumbnail_path} ---> {$ascii_thumbnail_path}");          
-              if (! $assoc_args['dry-run'] )
-                rename($thumbnail_path, $ascii_thumbnail_path);
-            }
+        // Replace thumbnails too
+        $file_path = dirname($full_path);
+        $metadata = wp_get_attachment_metadata($upload->ID);
+
+        // Correct main file for later usage
+        $metadata['file'] = $ascii_file;
+
+        // Usually this is image but if this is document instead it won't have different thumbnail sizes
+        if (isset($metadata['sizes'])) {
+
+          foreach ($metadata['sizes'] as $name => $thumbnail) {
+            $metadata['sizes'][$name]['file'];
+            $thumbnail_path = $file_path.'/'.$thumbnail['file'];
+
+            $ascii_thumbnail = Sanitizer::remove_accents($thumbnail['file']);
+
+            // Update metadata on thumbnail so we can push it back to database
+            $metadata['sizes'][$name]['file'] = $ascii_thumbnail;
+
+            $ascii_thumbnail_path = $file_path.'/'.$ascii_thumbnail;
+            if ( $assoc_args['verbose'] )
+              WP_CLI::line("----> Replacing thumbnail: {$ascii_thumbnail_path}");          
+            if (! isset($assoc_args['dry-run']) )
+              rename($thumbnail_path, $ascii_thumbnail_path);
           }
 
-          $fixed_metadata = serialize($metadata);
-
-          /*
-           * Replace Database
-           */
-          if (! $assoc_args['dry-run'] ) :
-
-            if ( $assoc_args['verbose'] )
-              WP_CLI::line("Replacing attachment {$upload->ID} data in database...");
-
-            // Replacing guid
-            $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}posts SET guid = %s WHERE ID=%d;",$ascii_guid,$upload->ID);
-            $wpdb->query($sql);
-
-            // Replace upload name
-            $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}postmeta SET meta_value = %s WHERE post_id=%d and meta_key='_wp_attached_file';",$ascii_file,$upload->ID);
-            $wpdb->query($sql);
-
-            // Replace meta data likethumbnail fields
-            $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}postmeta SET meta_value = %s WHERE post_id=%d and meta_key='_wp_attachment_metadata';",$fixed_metadata,$upload->ID);
-            $wpdb->query($sql);
-          endif;
-
         }
+
+        $fixed_metadata = serialize($metadata);
+
+        /**
+         * Replace Database
+         */
+        if ( $assoc_args['verbose'] )
+            WP_CLI::line("Replacing attachment {$upload->ID} data in database...");
+
+        if (! isset($assoc_args['dry-run']) ) :
+
+          // Replacing guid
+          $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}posts SET guid = %s WHERE ID=%d;",$ascii_guid,$upload->ID);
+          $wpdb->query($sql);
+
+          // Replace upload name
+          $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}postmeta SET meta_value = %s WHERE post_id=%d and meta_key='_wp_attached_file';",$ascii_file,$upload->ID);
+          $wpdb->query($sql);
+
+          // Replace meta data likethumbnail fields
+          $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}postmeta SET meta_value = %s WHERE post_id=%d and meta_key='_wp_attachment_metadata';",$fixed_metadata,$upload->ID);
+          $wpdb->query($sql);
+        endif;
+
       }
     }
     return $replaced_count;
@@ -173,4 +186,3 @@ class Sanitize_Command extends WP_CLI_Command {
 }
 
 WP_CLI::add_command('sanitize', __NAMESPACE__.'\\Sanitize_Command' );
-
