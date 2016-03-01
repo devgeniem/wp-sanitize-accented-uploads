@@ -12,7 +12,7 @@
     }
   ],
   "keywords": [
-    "wordpress", "wp","relative","urls"
+    "wordpress", "wp","accents","sanitate","escape","urls","uploads"
   ],
   "require": {
     "composer/installers": "v1.0.12"
