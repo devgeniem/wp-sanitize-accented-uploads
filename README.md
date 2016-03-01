@@ -3,6 +3,9 @@
 Removes accents from future uploads and has easy wp-cli command for removing accents from current uploads and attachment links from database.
 This helps tremendously with current and future migrations of this site and helps you to avoid strange filename encoding bugs.
 
+Sanitize accents from Cyrillic, German, French, Polish, Spanish, Hungarian, Czech, Greek, Swedish.
+This even removes Unicode NFD characters from files mounted on OS-X by using `Normalizer::normalize()`
+
 ## Installation
 
 Add it into your `composer.json`:
