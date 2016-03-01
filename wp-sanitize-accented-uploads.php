@@ -1,8 +1,10 @@
 <?php
 /**
- * Plugin name: Replace Accented Uploads
+ * Plugin name: WP Sanitize Accented Uploads
+ * Plugin URI: https://github.com/devgeniem/wp-sanitize-accented-uploads
  * Description: Replaces accents from future uploads and has wp-cli command which you can use to sanitize current content
  * Author: Onni Hakala / Geniem Oy
+ * Author URI: https://github.com/onnimonni
  * Version: 0.1
  */
 
