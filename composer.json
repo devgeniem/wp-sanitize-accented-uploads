@@ -1,0 +1,20 @@
+{
+  "name": "devgeniem/wp-sanitize-accented-uploads",
+  "type": "wordpress-muplugin",
+  "license": "MIT",
+  "description": "Replaces accents from future uploads and has wp-cli command which you can use to sanitize current content.",
+  "homepage": "http://geniem.com",
+  "authors": [
+    {
+      "name": "Onni Hakala",
+      "email": "onni.hakala@geniem.com",
+      "homepage": "https://github.com/onnimonni"
+    }
+  ],
+  "keywords": [
+    "wordpress", "wp","relative","urls"
+  ],
+  "require": {
+    "composer/installers": "v1.0.12"
+  }
+}
