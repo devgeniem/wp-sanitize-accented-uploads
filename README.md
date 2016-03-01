@@ -8,7 +8,14 @@ This even removes Unicode NFD characters from files mounted on OS-X by using `No
 
 ## Installation
 
-Add it into your `composer.json`:
+Install with composer by running:
+
+```
+$ composer require devgeniem/wp-sanitize-accented-uploads
+```
+
+OR Add it into your `composer.json`:
+
 ```json
 {
   "require": {
