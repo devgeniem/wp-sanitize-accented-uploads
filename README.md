@@ -43,4 +43,7 @@ $ wp sanitize all --verbose --dry-run
 
 # When you are sure go ahead and run it
 $ wp sanitize all
+
+# If you have a network you can do network wide replace
+$ wp sanitize all --network
 ```
