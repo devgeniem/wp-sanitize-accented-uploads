@@ -29,6 +29,9 @@ class Sanitize_Command extends WP_CLI_Command {
    *
    * [--verbose]
    * : More output from replacing.
+   *
+   * [--network]
+   * : More output from replacing.
    * 
    * // EXAMPLES
    * 

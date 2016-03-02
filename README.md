@@ -34,6 +34,8 @@ OR add it into your `composer.json`:
 It installs as mu-plugin so that your client won't accidentally disable it.
 
 ## Use WP CLI to remove accents from uploads and database
+This searches for accented filenames in all of your attachments. If it founds any it looks if these attachments are used in post content and sanitizes all occurences of the the attachment filename path from wp_posts and wp_postmeta.
+
 Take backup from your files and database before running this. It works for us but we can't give any guarantees.
 ```
 # You can analyze before running it:
