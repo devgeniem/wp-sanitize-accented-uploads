@@ -60,20 +60,6 @@ if (!class_exists(__NAMESPACE__.'\\Sanitizer')) {
       }
       return $ascii_string;
     }
-
-    /**
-     * Removes all accents from string
-     */
-    public static function replace_attachment($post) {
-
-      # If available remove NFD characters
-      if(class_exists('Normalizer')) {
-        $ascii_string = remove_accents(Normalizer::normalize($string));
-      } else {
-        $ascii_string = remove_accents($string);
-      }
-      return $ascii_string;
-    }
   }
 }
 
