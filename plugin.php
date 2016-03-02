@@ -17,7 +17,7 @@ use Normalizer;
  * With these you can easily make your current database and uploads sanitized
  */
 if ( defined('WP_CLI') && WP_CLI ) {
-  require_once(dirname( __FILE__ ). '/wp-cli.php');
+  require_once(dirname( __FILE__ ). '/wp-cli-integration.php');
 }
 
 if (!class_exists(__NAMESPACE__.'\\Sanitizer')) {
@@ -51,6 +51,20 @@ if (!class_exists(__NAMESPACE__.'\\Sanitizer')) {
      * Removes all accents from string
      */
     public static function remove_accents($string) {
+
+      # If available remove NFD characters
+      if(class_exists('Normalizer')) {
+        $ascii_string = remove_accents(Normalizer::normalize($string));
+      } else {
+        $ascii_string = remove_accents($string);
+      }
+      return $ascii_string;
+    }
+
+    /**
+     * Removes all accents from string
+     */
+    public static function replace_attachment($post) {
 
       # If available remove NFD characters
       if(class_exists('Normalizer')) {
