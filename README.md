@@ -5,9 +5,9 @@ WordPress plugin which removes accented characters like `åöä` from future upl
 This helps tremendously with current and future migrations of your site and helps you to avoid strange filename encoding bugs.
 
 Sanitize accents from Cyrillic, German, French, Polish, Spanish, Hungarian, Czech, Greek, Swedish.
-This even removes rare but possible unicode NFD characters from files mounted on OS-X by using [PHP Normalizer class](http://php.net/manual/en/normalizer.normalize.php). These usually happen if you have mounted uploads into your vagrant box in OS-X.
+This even removes rare but possible unicode NFD characters from files by using [PHP Normalizer class](http://php.net/manual/en/normalizer.normalize.php). These usually happen if you have mounted uploads into your vagrant box in OS-X.
 
-It also works for multisite installations.
+This plugin and wp-cli command is wordpress multisite compatible.
 
 ## Installation
 
