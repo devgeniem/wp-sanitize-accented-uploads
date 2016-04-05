@@ -67,15 +67,14 @@ if (!class_exists(__NAMESPACE__.'\\Sanitizer')) {
     public static function move_accented_files_in_any_form($old_file,$new_file) {
 
       // Try to move the file
-      $result = rename($old_file,$new_file);
+      $result = @rename($old_file,$new_file);
 
       // If Normalizer is available try to rename file with NFD characters
       if(class_exists('Normalizer') && ! $result ) {
 
         $possible_old_files = array(
-          Normalizer::normalize($old_file,Normalizer::FORM_D),
-          Normalizer::normalize($old_file,Normalizer::FORM_C),
-          Normalizer::normalize($old_file,Normalizer::NONE)
+          Normalizer::normalize($old_file,Normalizer::FORM_C), // This is the normal way to do unicode
+          Normalizer::normalize($old_file,Normalizer::FORM_D), // This is the OS-X way to do unicode
         );
 
         foreach ($possible_old_files as $possible_old_file) {

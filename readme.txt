@@ -19,7 +19,7 @@ This even removes rare but possible unicode NFD characters from files by using [
 
 This plugin is wordpress multisite compatible.
 
-More information in github page: https://github.com/devgeniem/wp-sanitize-accented-uploads 
+More information in github page: https://github.com/devgeniem/wp-sanitize-accented-uploads
 
 == Installation ==
 
@@ -40,6 +40,10 @@ After the plugin installation and activation you can run `$ wp sanitize all` in 
 See `$ wp sanitize --help` for more.
 
 == Changelog ==
+
+
+= 1.0.1 =
+* Replaces files which have accidentally turned into NFD too. First tries the filename found from DB and then tries NFD version of file name if it didn't succeed.
 
 = 1.0 =
 * Initial release which works in multisites too.
