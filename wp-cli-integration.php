@@ -21,9 +21,9 @@ class Sanitize_Command extends WP_CLI_Command {
 
   /**
    * Makes all currently uploaded filenames and urls sanitized. Also replaces corresponding files from wp_posts and wp_postmeta
-   * 
+   *
    * // OPTIONS
-   * 
+   *
    * [--dry-run]
    * : Only prints the changes without replacing.
    *
@@ -32,9 +32,9 @@ class Sanitize_Command extends WP_CLI_Command {
    *
    * [--network]
    * : More output from replacing.
-   * 
+   *
    * // EXAMPLES
-   * 
+   *
    *     wp sanitize all
    *     wp sanitize all --dry-run
    *
@@ -44,7 +44,7 @@ class Sanitize_Command extends WP_CLI_Command {
   {
     $count = self::replace_content($args,$assoc_args);
 
-    if ( isset($assoc_args['dry-run']) ) 
+    if ( isset($assoc_args['dry-run']) )
       WP_CLI::success("Found {$count} attachments to replace.");
     else
       WP_CLI::success("Replaced {$count} attachments.");
@@ -96,8 +96,8 @@ class Sanitize_Command extends WP_CLI_Command {
           WP_CLI::line("Processing upload (ID:".$upload->ID."): {$upload->guid}");
 
 
-        $ascii_guid = Sanitizer::remove_accents($upload->guid);      
-        
+        $ascii_guid = Sanitizer::remove_accents($upload->guid);
+
         // Replace all files and content if file is different after removing accents
         if ($ascii_guid != $upload->guid ) {
           WP_CLI::line("----> File will be sanitized...");
@@ -148,8 +148,9 @@ class Sanitize_Command extends WP_CLI_Command {
           // Move the file
           if ( $assoc_args['verbose'] )
             WP_CLI::line("----> Replacing image:     {$ascii_full_path}");
-          if (! isset($assoc_args['dry-run']) )
-            rename($full_path, $ascii_full_path);
+          if (! isset($assoc_args['dry-run']) ) {
+            Sanitizer::move_accented_files_in_any_form($full_path, $ascii_full_path);
+          }
 
           // Replace thumbnails too
           $file_path = dirname($full_path);
@@ -172,9 +173,9 @@ class Sanitize_Command extends WP_CLI_Command {
 
               $ascii_thumbnail_path = $file_path.'/'.$ascii_thumbnail;
               if ( $assoc_args['verbose'] )
-                WP_CLI::line("----> Replacing thumbnail: {$ascii_thumbnail_path}");          
+                WP_CLI::line("----> Replacing thumbnail: {$ascii_thumbnail_path}");
               if (! isset($assoc_args['dry-run']) )
-                rename($thumbnail_path, $ascii_thumbnail_path);
+                Sanitizer::move_accented_files_in_any_form($thumbnail_path, $ascii_thumbnail_path);
             }
           }
 

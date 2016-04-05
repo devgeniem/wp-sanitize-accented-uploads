@@ -46,7 +46,7 @@ if (!class_exists(__NAMESPACE__.'\\Sanitizer')) {
     ###########################################################
     # HELPER METHODS TO ACHIEVE SANITIZED UPLOADS AND CONTENT #
     ###########################################################
-    
+
     /**
      * Removes all accents from string
      */
@@ -59,6 +59,38 @@ if (!class_exists(__NAMESPACE__.'\\Sanitizer')) {
         $ascii_string = remove_accents($string);
       }
       return $ascii_string;
+    }
+
+    /**
+     * Tries to move any version of NFC & NFD unicode compositions of $old_file
+     */
+    public static function move_accented_files_in_any_form($old_file,$new_file) {
+
+      // Try to move the file
+      $result = rename($old_file,$new_file);
+
+      // If Normalizer is available try to rename file with NFD characters
+      if(class_exists('Normalizer') && ! $result ) {
+
+        $possible_old_files = array(
+          Normalizer::normalize($old_file,Normalizer::FORM_D),
+          Normalizer::normalize($old_file,Normalizer::FORM_C),
+          Normalizer::normalize($old_file,Normalizer::NONE)
+        );
+
+        foreach ($possible_old_files as $possible_old_file) {
+          // Try to move the file
+          $result = rename($possible_old_file,$new_file);
+
+          // Stop immediately if we found a solution
+          if ($result) {
+            break;
+          }
+        }
+      }
+
+      // Return bool if we succesfully moved a file
+      return $result;
     }
   }
 }
