@@ -1,0 +1,5 @@
+# Hide OS-X crap
+.DS_Store
+
+# Hide svn folder
+svn
