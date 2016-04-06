@@ -11,6 +11,8 @@ namespace Geniem;
 use WP_CLI_Command;
 use WP_CLI;
 
+defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
+
 // This might be really heavy weight boxing so allow us to use maximum amount from the memory
 ini_set('memory_limit', '-1');
 
