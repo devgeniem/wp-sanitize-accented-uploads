@@ -59,4 +59,5 @@ if [ ! -d "$SVNDIR/tags/$GIT_TAG" ]; then
 fi
 
 # Return to branch where we were before
+git stash
 git checkout $GIT_BRANCH

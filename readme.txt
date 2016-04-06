@@ -1,9 +1,9 @@
 === WP Sanitize Accented Uploads ===
-Contributors: onnimonni
+Contributors: devgeniem, onnimonni
 Tags: uploads, files, accents, sanitize
 Requires at least: 4.0
-Tested up to: 4.1
-Stable tag: 1.0.1
+Tested up to: 4.4.2
+Stable tag: 1.0.3
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 
