@@ -58,7 +58,7 @@ if (!class_exists(__NAMESPACE__.'\\Sanitizer')) {
 
       # If available remove NFD characters
       if(class_exists('Normalizer')) {
-        $ascii_string = remove_accents(Normalizer::normalize($string));
+        $ascii_string = remove_accents(Normalizer::normalize($string),Normalizer::FORM_C);
       } else {
         $ascii_string = remove_accents($string);
       }
@@ -69,7 +69,6 @@ if (!class_exists(__NAMESPACE__.'\\Sanitizer')) {
      * Tries to move any version of NFC & NFD unicode compositions of $old_file
      */
     public static function move_accented_files_in_any_form($old_file,$new_file) {
-
       // Try to move the file
       $result = @rename($old_file,$new_file);
 
@@ -82,13 +81,18 @@ if (!class_exists(__NAMESPACE__.'\\Sanitizer')) {
         );
 
         foreach ($possible_old_files as $possible_old_file) {
-          // Try to move the file
-          $result = rename($possible_old_file,$new_file);
 
-          // Stop immediately if we found a solution
-          if ($result) {
-            break;
+          // Try to move the file
+          if (file_exists($possible_old_file)) {
+
+            $result = rename($possible_old_file,$new_file);
+
+            // Stop immediately if we found a solution
+            if ($result) {
+              break;
+            }
           }
+
         }
       }
 
