@@ -94,7 +94,7 @@ class Sanitize_Command extends WP_CLI_Command {
       WP_CLI::line("Found: ".count($uploads)." attachments.");
       WP_CLI::line("This may take a while...");
       foreach ($uploads as $upload) :
-        if ( $assoc_args['verbose'] )
+        if ( isset($assoc_args['verbose']) )
           WP_CLI::line("Processing upload (ID:".$upload->ID."): {$upload->guid}");
 
 
@@ -148,7 +148,7 @@ class Sanitize_Command extends WP_CLI_Command {
           $ascii_full_path = Sanitizer::remove_accents($full_path);
 
           // Move the file
-          if ( $assoc_args['verbose'] )
+          if ( isset($assoc_args['verbose']) )
             WP_CLI::line("----> Replacing image:     {$ascii_full_path}");
           if (! isset($assoc_args['dry-run']) ) {
             Sanitizer::move_accented_files_in_any_form($full_path, $ascii_full_path);
@@ -174,7 +174,7 @@ class Sanitize_Command extends WP_CLI_Command {
               $metadata['sizes'][$name]['file'] = $ascii_thumbnail;
 
               $ascii_thumbnail_path = $file_path.'/'.$ascii_thumbnail;
-              if ( $assoc_args['verbose'] )
+              if ( isset($assoc_args['verbose']) )
                 WP_CLI::line("----> Replacing thumbnail: {$ascii_thumbnail_path}");
               if (! isset($assoc_args['dry-run']) )
                 Sanitizer::move_accented_files_in_any_form($thumbnail_path, $ascii_thumbnail_path);
@@ -186,7 +186,7 @@ class Sanitize_Command extends WP_CLI_Command {
           /**
            * Replace Database
            */
-          if ( $assoc_args['verbose'] )
+          if ( isset($assoc_args['verbose']) )
               WP_CLI::line("Replacing attachment {$upload->ID} data in database...");
 
           if (! isset($assoc_args['dry-run']) ) :
