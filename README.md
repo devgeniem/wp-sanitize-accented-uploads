@@ -8,10 +8,11 @@ This helps tremendously with current and future migrations of your site and help
 Sanitize accents from Cyrillic, German, French, Polish, Spanish, Hungarian, Czech, Greek, Swedish.
 This even removes rare but possible unicode NFD characters from files by using [PHP Normalizer class](http://php.net/manual/en/normalizer.normalize.php). These usually happen if you have mounted uploads into your vagrant box in OS-X.
 
-This plugin and wp-cli command is wordpress multisite compatible.
+This plugin and wp-cli command are WordPress multisite compatible.
 
 ## Installation
 
+### Composer
 Install with composer by running:
 
 ```
@@ -32,7 +33,12 @@ OR add it into your `composer.json`:
   }
 }
 ```
-It installs as mu-plugin so that your client won't accidentally disable it.
+It installs as mu-plugin so that your clients won't accidentally disable it.
+
+### Wordpress.org
+You can also download the plugin from wordpress.org:
+
+[https://wordpress.org/plugins/wp-sanitize-accented-uploads/](https://wordpress.org/plugins/wp-sanitize-accented-uploads/)
 
 ## Use WP CLI to remove accents from uploads and database
 This searches for accented filenames in all of your attachments. If it founds any it looks if these attachments are used in post content and sanitizes all occurences of the the attachment filename path from wp_posts and wp_postmeta.
