@@ -89,7 +89,7 @@ class Sanitize_Command extends WP_CLI_Command {
       $replaced_count = 0;
 
       // Get upload path
-      $path = wp_upload_dir()['basedir'];
+      $upload_path = wp_upload_dir()['basedir'];
 
       WP_CLI::line("Found: ".count($uploads)." attachments.");
       WP_CLI::line("This may take a while...");
@@ -142,16 +142,14 @@ class Sanitize_Command extends WP_CLI_Command {
           if (! isset($assoc_args['dry-run']) )
             $wpdb->query($sql);
 
-
-
+          // Get full path for file and replace accents for the future filename
           $full_path = get_attached_file($upload->ID);
           $ascii_full_path = Sanitizer::remove_accents($full_path);
-          // Just the file name
-          $ascii_file = basename($ascii_full_path);
 
           // Move the file
-          if ( isset($assoc_args['verbose']) )
+          if ( isset($assoc_args['verbose']) ) {
             WP_CLI::line("----> Replacing image:     {$ascii_full_path}");
+          }
           if (! isset($assoc_args['dry-run']) ) {
             Sanitizer::move_accented_files_in_any_form($full_path, $ascii_full_path);
           }
@@ -161,6 +159,7 @@ class Sanitize_Command extends WP_CLI_Command {
           $metadata = wp_get_attachment_metadata($upload->ID);
 
           // Correct main file for later usage
+          $ascii_file = Sanitizer::remove_accents( $metadata['file'] );
           $metadata['file'] = $ascii_file;
 
           // Usually this is image but if this is document instead it won't have different thumbnail sizes

@@ -48,7 +48,7 @@ if [ ! -d "$SVNDIR/tags/$GIT_TAG" ]; then
   # - composer.json
   # - README.md
   rsync -a --delete --exclude tests --exclude composer.json --exclude phpunit.xml --exclude .gitignore \
-           --exclude $SVNDIR --exclude README.md --exclude push-to-svn.sh --exclude .git \
+           --exclude $SVNDIR --exclude README.md --exclude *.sh --exclude .git \
            ../* trunk/
   svn add trunk --force
   svn ci -m "Synced with git"
