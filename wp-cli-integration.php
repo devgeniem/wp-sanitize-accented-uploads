@@ -44,12 +44,12 @@ class Sanitize_Command extends WP_CLI_Command {
    */
   public function all($args, $assoc_args)
   {
-    $count = self::replace_content($args,$assoc_args);
+    $result = self::replace_content($args,$assoc_args);
 
     if ( isset($assoc_args['dry-run']) )
-      WP_CLI::success("Found {$count} attachments to replace.");
+      WP_CLI::success("Found {$result['replaced_count']} from {$result['considered_count']} attachments to replace.");
     else
-      WP_CLI::success("Replaced {$count} attachments.");
+      WP_CLI::success("Replaced {$result['replaced_count']} from {$result['considered_count']} attachments.");
   }
 
   /**
@@ -86,6 +86,8 @@ class Sanitize_Command extends WP_CLI_Command {
         'numberposts' => -1,
       ));
 
+      $all_posts_count = count($uploads);
+
       $replaced_count = 0;
 
       // Get upload path
@@ -93,16 +95,12 @@ class Sanitize_Command extends WP_CLI_Command {
 
       WP_CLI::line("Found: ".count($uploads)." attachments.");
       WP_CLI::line("This may take a while...");
-      foreach ($uploads as $upload) :
-        if ( isset($assoc_args['verbose']) )
-          WP_CLI::line("Processing upload (ID:".$upload->ID."): {$upload->guid}");
-
+      foreach ($uploads as $index => $upload) :
 
         $ascii_guid = Sanitizer::remove_accents($upload->guid);
 
         // Replace all files and content if file is different after removing accents
         if ($ascii_guid != $upload->guid ) {
-          WP_CLI::line("----> File will be sanitized...");
 
           $replaced_count+= 1;
 
@@ -118,18 +116,22 @@ class Sanitize_Command extends WP_CLI_Command {
           $attachment_string = $file_info['dirname'].'/'.$file_info['filename'];
           $escaped_attachment_string = Sanitizer::remove_accents($attachment_string);
 
-          // DB Replace post_content
           // We don't need to replace excerpt for example since it doesn't have attachments...
-          WP_CLI::line("Replacing attachment {$file_info['basename']} from {$wpdb->prefix}posts and {$wpdb->prefix}postmeta...");
+          WP_CLI::line("REPLACING: {$file_info['basename']} ---> ".Sanitizer::remove_accents($file_info['basename'])." ");
           $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}posts SET post_content = REPLACE (post_content, '%s', '%s') WHERE post_content LIKE '%s';",
             $attachment_string,
             $escaped_attachment_string,
             '%'.$wpdb->esc_like($attachment_string).'%'
           );
-          WP_CLI::line("RUNNING SQL: {$sql}");
 
-          if (! isset($assoc_args['dry-run']) )
-              $wpdb->query($sql);
+          if ( isset($assoc_args['verbose']) ) {
+            WP_CLI::line("RUNNING SQL: {$sql}");
+          }
+
+          if (! isset($assoc_args['dry-run']) ) {
+            $wpdb->query($sql);
+          }
+
 
           // DB Replace post meta except attachment meta because we do attachments later
           $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}postmeta SET meta_value = REPLACE (meta_value, '%s', '%s') WHERE meta_value LIKE '%s' AND meta_key!='_wp_attachment_metadata' AND meta_key!='_wp_attached_file';",
@@ -137,7 +139,10 @@ class Sanitize_Command extends WP_CLI_Command {
             $escaped_attachment_string,
             '%'.$wpdb->esc_like($attachment_string).'%'
           );
-          WP_CLI::line("RUNNING SQL: {$sql}");
+
+          if ( isset($assoc_args['verbose']) ) {
+            WP_CLI::line("RUNNING SQL: {$sql}");
+          }
 
           if (! isset($assoc_args['dry-run']) )
             $wpdb->query($sql);
@@ -147,9 +152,8 @@ class Sanitize_Command extends WP_CLI_Command {
           $ascii_full_path = Sanitizer::remove_accents($full_path);
 
           // Move the file
-          if ( isset($assoc_args['verbose']) ) {
-            WP_CLI::line("----> Replacing image:     {$ascii_full_path}");
-          }
+          WP_CLI::line("----> Replacing image:     {$ascii_full_path}");
+
           if (! isset($assoc_args['dry-run']) ) {
             Sanitizer::move_accented_files_in_any_form($full_path, $ascii_full_path);
           }
@@ -175,8 +179,9 @@ class Sanitize_Command extends WP_CLI_Command {
               $metadata['sizes'][$name]['file'] = $ascii_thumbnail;
 
               $ascii_thumbnail_path = $file_path.'/'.$ascii_thumbnail;
-              if ( isset($assoc_args['verbose']) )
-                WP_CLI::line("----> Replacing thumbnail: {$ascii_thumbnail_path}");
+
+              WP_CLI::line("----> Replacing thumbnail: {$ascii_thumbnail_path}");
+
               if (! isset($assoc_args['dry-run']) )
                 Sanitizer::move_accented_files_in_any_form($thumbnail_path, $ascii_thumbnail_path);
             }
@@ -192,7 +197,7 @@ class Sanitize_Command extends WP_CLI_Command {
 
           if (! isset($assoc_args['dry-run']) ) :
 
-            // Replacing guid
+            // Replace guid
             $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}posts SET guid = %s WHERE ID=%d;",$ascii_guid,$upload->ID);
             $wpdb->query($sql);
 
@@ -200,14 +205,18 @@ class Sanitize_Command extends WP_CLI_Command {
             $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}postmeta SET meta_value = %s WHERE post_id=%d and meta_key='_wp_attached_file';",$ascii_file,$upload->ID);
             $wpdb->query($sql);
 
-            // Replace meta data likethumbnail fields
+            // Replace meta data like thumbnail fields
             $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}postmeta SET meta_value = %s WHERE post_id=%d and meta_key='_wp_attachment_metadata';",$fixed_metadata,$upload->ID);
             $wpdb->query($sql);
           endif;
+          $remaining_files = $all_posts_count - $index - 1;
+          WP_CLI::line("");
+          WP_CLI::line("Remaining workload: $remaining_files attachments...");
+          WP_CLI::line("");
         }
       endforeach;
     endforeach;
-    return $replaced_count;
+    return array('replaced_count' => $replaced_count, 'considered_count' => $all_posts_count);
   } #END: function
 } #END: class
 
