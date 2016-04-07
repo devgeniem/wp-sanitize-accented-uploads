@@ -24,7 +24,7 @@ OR add it into your `composer.json`:
 ```json
 {
   "require": {
-    "geniem/sanitize-accented-uploads": "*"
+    "devgeniem/sanitize-accented-uploads": "*"
   },
   "extra": {
     "installer-paths": {
