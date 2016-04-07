@@ -146,6 +146,8 @@ class Sanitize_Command extends WP_CLI_Command {
 
           $full_path = get_attached_file($upload->ID);
           $ascii_full_path = Sanitizer::remove_accents($full_path);
+          // Just the file name
+          $ascii_file = basename($ascii_full_path);
 
           // Move the file
           if ( isset($assoc_args['verbose']) )
