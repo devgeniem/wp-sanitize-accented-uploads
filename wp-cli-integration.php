@@ -75,10 +75,10 @@ class Sanitize_Command extends WP_CLI_Command {
     // Loop all sites
     foreach ($sites as $site) :
 
-      if ( is_multisite() ) :
+      if ( is_multisite() ) {
         WP_CLI::line("Processing network site: {$site['blog_id']}");
         switch_to_blog($site['blog_id']);
-      endif;
+      }
 
       // Get all uploads
       $uploads = get_posts( array(
@@ -105,7 +105,7 @@ class Sanitize_Command extends WP_CLI_Command {
           $replaced_count+= 1;
 
           /**
-           * Replace this file in all post content
+           * Replace all thumbnail sizes of this file from all post contents
            * Attachment in post content is only rarely file.jpg
            * More ofter it's like file-800x500.jpg
            * Only search for the file basename like /wp-content/uploads/2017/01/file without extension
@@ -131,7 +131,6 @@ class Sanitize_Command extends WP_CLI_Command {
           if (! isset($assoc_args['dry-run']) ) {
             $wpdb->query($sql);
           }
-
 
           // DB Replace post meta except attachment meta because we do attachments later
           $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}postmeta SET meta_value = REPLACE (meta_value, '%s', '%s') WHERE meta_value LIKE '%s' AND meta_key!='_wp_attachment_metadata' AND meta_key!='_wp_attached_file';",
@@ -209,7 +208,11 @@ class Sanitize_Command extends WP_CLI_Command {
             $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}postmeta SET meta_value = %s WHERE post_id=%d and meta_key='_wp_attachment_metadata';",$fixed_metadata,$upload->ID);
             $wpdb->query($sql);
           endif;
+
+          // Calculate remaining files
           $remaining_files = $all_posts_count - $index - 1;
+
+          // Show some kind of progress to wp-cli user
           WP_CLI::line("");
           WP_CLI::line("Remaining workload: $remaining_files attachments...");
           WP_CLI::line("");

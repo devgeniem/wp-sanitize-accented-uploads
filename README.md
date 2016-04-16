@@ -40,6 +40,15 @@ You can also download the plugin from wordpress.org:
 
 [https://wordpress.org/plugins/wp-sanitize-accented-uploads/](https://wordpress.org/plugins/wp-sanitize-accented-uploads/)
 
+## Contributing
+Contributions are welcome! If you add new functionality remember to add new unit tests too.
+
+### Add your encoding problems
+We want to build a list of possible fixes for encoding problems.
+Please let us know if you have had errors with accents so that your filename `ääkkönen.png` has turned into `Ã¤Ã¤kkÃ¶nen.png`.
+
+This way we can repair more problems with `Sanitizer::get_encoding_fix_list()`.
+
 ## Use WP CLI to remove accents from uploads and database
 This searches for accented filenames in all of your attachments. If it founds any it looks if these attachments are used in post content and sanitizes all occurences of the the attachment filename path from wp_posts and wp_postmeta.
 
