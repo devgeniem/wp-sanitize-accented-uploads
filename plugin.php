@@ -7,7 +7,7 @@
  * Author URI: https://github.com/onnimonni
  * License: MIT
  * License URI: https://opensource.org/licenses/MIT
- * Version: 1.0.7
+ * Version: 1.0.8
  */
 
 namespace Geniem;
