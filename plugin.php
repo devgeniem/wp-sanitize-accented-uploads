@@ -72,10 +72,13 @@ if (!class_exists(__NAMESPACE__.'\\Sanitizer')) {
       $filename = remove_accents($filename);
 
       if ( $sanitize ) {
-
         # Sanitize special characters for files so that they work in urls
         $filename = sanitize_file_name($filename);
+
       }
+
+      # And then just remove anything fancy like ¼ and ™
+      $filename = self::remove_non_ascii_characters($filename);
 
       # If this was full path return it like it was before
       # pathinfo returns . for only filenames
@@ -85,6 +88,13 @@ if (!class_exists(__NAMESPACE__.'\\Sanitizer')) {
 
       # Return full path
       return $filename;
+    }
+
+    /**
+     * Removes all non-ascii characters
+     */
+    public static function remove_non_ascii_characters( $string ) {
+      return preg_replace("/[^(\x20-\x7F)]*/", "", $string );
     }
 
     /**

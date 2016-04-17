@@ -30,6 +30,12 @@ class PluginTest extends WP_UnitTestCase {
     $this->assertEquals( 'aakkonen.jpg', Geniem\Sanitizer::remove_accents($file) );
   }
 
+  function test_should_sanitize_special_chars_and_spaces() {
+    $file = 'mathematical file of ¼.png';
+
+    $this->assertEquals( 'mathematical-file-of-.png', Geniem\Sanitizer::remove_accents($file) );
+  }
+
   function test_should_create_nfc_encoding_errors() {
     $correct_file = 'uploads/2020/02/ääkkönen.png';
     $encoding_error_file = 'uploads/2020/02/Ã¤Ã¤kkÃ¶nen.png';

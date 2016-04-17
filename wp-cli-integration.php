@@ -90,9 +90,6 @@ class Sanitize_Command extends WP_CLI_Command {
 
       $replaced_count = 0;
 
-      // Get upload path
-      $upload_path = wp_upload_dir()['basedir'];
-
       WP_CLI::line("Found: ".count($uploads)." attachments.");
       WP_CLI::line("This may take a while...");
       foreach ($uploads as $index => $upload) :
@@ -132,7 +129,8 @@ class Sanitize_Command extends WP_CLI_Command {
             $wpdb->query($sql);
           }
 
-          // DB Replace post meta except attachment meta because we do attachments later
+          // DB Replace post meta except _wp_attached_file because it is serialized
+          // This will be done later
           $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}postmeta SET meta_value = REPLACE (meta_value, '%s', '%s') WHERE meta_value LIKE '%s' AND meta_key!='_wp_attachment_metadata' AND meta_key!='_wp_attached_file';",
             $attachment_string,
             $escaped_attachment_string,
@@ -143,8 +141,9 @@ class Sanitize_Command extends WP_CLI_Command {
             WP_CLI::line("RUNNING SQL: {$sql}");
           }
 
-          if (! isset($assoc_args['dry-run']) )
+          if (! isset($assoc_args['dry-run']) ) {
             $wpdb->query($sql);
+          }
 
           // Get full path for file and replace accents for the future filename
           $full_path = get_attached_file($upload->ID);
@@ -187,7 +186,7 @@ class Sanitize_Command extends WP_CLI_Command {
               WP_CLI::line("----> Checking thumbnail: {$thumbnail_path}");
 
               if (! isset($assoc_args['dry-run']) ) {
-                $old_file = Sanitizer::move_accented_files_in_any_form($thumbnail_path, $ascii_thumbnail_path);
+                $old_file = Sanitizer::rename_accented_files_in_any_form($thumbnail_path, $ascii_thumbnail_path);
                 if ($old_file) {
                   WP_CLI::line("----> Replaced thumbnail: ".basename($old_file)." -> ".basename($ascii_thumbnail_path));
                 } else {
@@ -197,15 +196,17 @@ class Sanitize_Command extends WP_CLI_Command {
             }
           }
 
+          // Serialize fixed metadata so that we can insert it back to database
           $fixed_metadata = serialize($metadata);
 
           /**
            * Replace Database
            */
-          if ( isset($assoc_args['verbose']) )
-              WP_CLI::line("Replacing attachment {$upload->ID} data in database...");
+          if ( isset($assoc_args['verbose']) ) {
+            WP_CLI::line("Replacing attachment {$upload->ID} data in database...");
+          }
 
-          if (! isset($assoc_args['dry-run']) ) :
+          if (! isset($assoc_args['dry-run']) ) {
 
             // Replace guid
             $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}posts SET guid = %s WHERE ID=%d;",$ascii_guid,$upload->ID);
@@ -218,7 +219,7 @@ class Sanitize_Command extends WP_CLI_Command {
             // Replace meta data like thumbnail fields
             $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}postmeta SET meta_value = %s WHERE post_id=%d and meta_key='_wp_attachment_metadata';",$fixed_metadata,$upload->ID);
             $wpdb->query($sql);
-          endif;
+          }
 
           // Calculate remaining files
           $remaining_files = $all_posts_count - $index - 1;
