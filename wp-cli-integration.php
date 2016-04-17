@@ -151,10 +151,15 @@ class Sanitize_Command extends WP_CLI_Command {
           $ascii_full_path = Sanitizer::remove_accents($full_path);
 
           // Move the file
-          WP_CLI::line("----> Replacing image:     {$ascii_full_path}");
+          WP_CLI::line("----> Checking image:     {$full_path}");
 
           if (! isset($assoc_args['dry-run']) ) {
-            Sanitizer::move_accented_files_in_any_form($full_path, $ascii_full_path);
+            $old_file = Sanitizer::rename_accented_files_in_any_form($full_path, $ascii_full_path);
+            if ($old_file) {
+              WP_CLI::line("----> Replaced file:      ".basename($old_file)." -> ".basename($ascii_full_path));
+            } else {
+              WP_CLI::line("----> ERROR: File can't be found: ".basename($full_path));
+            }
           }
 
           // Replace thumbnails too
@@ -179,10 +184,16 @@ class Sanitize_Command extends WP_CLI_Command {
 
               $ascii_thumbnail_path = $file_path.'/'.$ascii_thumbnail;
 
-              WP_CLI::line("----> Replacing thumbnail: {$ascii_thumbnail_path}");
+              WP_CLI::line("----> Checking thumbnail: {$thumbnail_path}");
 
-              if (! isset($assoc_args['dry-run']) )
-                Sanitizer::move_accented_files_in_any_form($thumbnail_path, $ascii_thumbnail_path);
+              if (! isset($assoc_args['dry-run']) ) {
+                $old_file = Sanitizer::move_accented_files_in_any_form($thumbnail_path, $ascii_thumbnail_path);
+                if ($old_file) {
+                  WP_CLI::line("----> Replaced thumbnail: ".basename($old_file)." -> ".basename($ascii_thumbnail_path));
+                } else {
+                  WP_CLI::line("----> ERROR: File can't be found: ".basename($thumbnail_path));
+                }
+              }
             }
           }
 

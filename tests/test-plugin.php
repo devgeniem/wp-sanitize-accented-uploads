@@ -18,9 +18,9 @@ class PluginTest extends WP_UnitTestCase {
     $this->assertEquals( 'http://example.com/wp-content/uploads/2020/02/aakkonen.jpg', Geniem\Sanitizer::remove_accents($file) );
   }
 
-  function test_should_fix_known_encoding_error() {
-    $buggy_file = 'uploads/2020/02/Ã¤Ã¤kkÃ¶nen.png';
-    $correct_file = 'uploads/2020/02/aakkonen.png';
+  function test_creating_encoding_errors() {
+    $correct_file = 'uploads/2020/02/ääkkönen.png';
+    $encoding_error_file = 'uploads/2020/02/Ã¤Ã¤kkÃ¶nen.png';
 
     $fixed_file = Geniem\Sanitizer::remove_known_file_encoding_errors($file);
     $this->assertEquals( $correct_file, $fixed_file  );
