@@ -12,10 +12,22 @@ class PluginTest extends WP_UnitTestCase {
     $this->assertEquals( $file, Geniem\Sanitizer::remove_accents($file) );
   }
 
-  function test_should_sanitize_accent() {
+  function test_should_sanitize_accent_with_url() {
     $file = 'http://example.com/wp-content/uploads/2020/02/ääkkönen.jpg';
 
     $this->assertEquals( 'http://example.com/wp-content/uploads/2020/02/aakkonen.jpg', Geniem\Sanitizer::remove_accents($file) );
+  }
+
+  function test_should_sanitize_accent_with_path() {
+    $file = '/data/uploads/2020/02/ääkkönen.jpg';
+
+    $this->assertEquals( '/data/uploads/2020/02/aakkonen.jpg', Geniem\Sanitizer::remove_accents($file) );
+  }
+
+  function test_should_sanitize_accent() {
+    $file = 'ääkkönen.jpg';
+
+    $this->assertEquals( 'aakkonen.jpg', Geniem\Sanitizer::remove_accents($file) );
   }
 
   function test_creating_encoding_errors() {
