@@ -22,7 +22,7 @@ class PluginTest extends WP_UnitTestCase {
     $correct_file = 'uploads/2020/02/ääkkönen.png';
     $encoding_error_file = 'uploads/2020/02/Ã¤Ã¤kkÃ¶nen.png';
 
-    $fixed_file = Geniem\Sanitizer::remove_known_file_encoding_errors($file);
-    $this->assertEquals( $correct_file, $fixed_file  );
+    $error_file = Geniem\Sanitizer::replace_filename_with_encoding_errors($correct_file);
+    $this->assertEquals( $error_file, $encoding_error_file  );
   }
 }
