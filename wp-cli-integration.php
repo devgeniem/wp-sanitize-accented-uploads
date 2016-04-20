@@ -32,6 +32,9 @@ class Sanitize_Command extends WP_CLI_Command {
    * [--verbose]
    * : More output from replacing.
    *
+   * [--without-sanitize]
+   * : This doesn't make files to lower case and doesn't strip special chars
+   *
    * [--network]
    * : More output from replacing.
    *
@@ -40,7 +43,7 @@ class Sanitize_Command extends WP_CLI_Command {
    *     wp sanitize all
    *     wp sanitize all --dry-run
    *
-   * @synopsis [--dry-run] [--verbose] [--network]
+   * @synopsis [--dry-run] [--without-sanitize] [--verbose] [--network]
    */
   public function all($args, $assoc_args)
   {
@@ -56,6 +59,13 @@ class Sanitize_Command extends WP_CLI_Command {
    * Helper: Removes accents from all attachments and posts where those attachments were used
    */
   private static function replace_content($args, $assoc_args) {
+
+
+    if (isset($assoc_args['without-sanitize'])) {
+      $assoc_args['sanitize'] = false;
+    } else {
+      $assoc_args['sanitize'] = true;
+    }
 
     if ( isset($assoc_args['network']) ) {
       if ( is_multisite() ) {
@@ -94,7 +104,7 @@ class Sanitize_Command extends WP_CLI_Command {
       WP_CLI::line("This may take a while...");
       foreach ($uploads as $index => $upload) :
 
-        $ascii_guid = Sanitizer::remove_accents($upload->guid);
+        $ascii_guid = Sanitizer::remove_accents($upload->guid,$assoc_args['sanitize']);
 
         // Replace all files and content if file is different after removing accents
         if ($ascii_guid != $upload->guid ) {
@@ -111,10 +121,10 @@ class Sanitize_Command extends WP_CLI_Command {
 
           // Check filename without extension so we can replace all thumbnail sizes at once
           $attachment_string = $file_info['dirname'].'/'.$file_info['filename'];
-          $escaped_attachment_string = Sanitizer::remove_accents($attachment_string);
+          $escaped_attachment_string = Sanitizer::remove_accents($attachment_string,$assoc_args['sanitize']);
 
           // We don't need to replace excerpt for example since it doesn't have attachments...
-          WP_CLI::line("REPLACING: {$file_info['basename']} ---> ".Sanitizer::remove_accents($file_info['basename'])." ");
+          WP_CLI::line("REPLACING: {$file_info['basename']} ---> ".Sanitizer::remove_accents($file_info['basename'],$assoc_args['sanitize'])." ");
           $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}posts SET post_content = REPLACE (post_content, '%s', '%s') WHERE post_content LIKE '%s';",
             $attachment_string,
             $escaped_attachment_string,
@@ -147,7 +157,7 @@ class Sanitize_Command extends WP_CLI_Command {
 
           // Get full path for file and replace accents for the future filename
           $full_path = get_attached_file($upload->ID);
-          $ascii_full_path = Sanitizer::remove_accents($full_path);
+          $ascii_full_path = Sanitizer::remove_accents( $full_path, $assoc_args['sanitize'] );
 
           // Move the file
           WP_CLI::line("----> Checking image:     {$full_path}");
@@ -166,7 +176,7 @@ class Sanitize_Command extends WP_CLI_Command {
           $metadata = wp_get_attachment_metadata($upload->ID);
 
           // Correct main file for later usage
-          $ascii_file = Sanitizer::remove_accents( $metadata['file'] );
+          $ascii_file = Sanitizer::remove_accents( $metadata['file'], $assoc_args['sanitize'] );
           $metadata['file'] = $ascii_file;
 
           // Usually this is image but if this is document instead it won't have different thumbnail sizes
@@ -176,7 +186,7 @@ class Sanitize_Command extends WP_CLI_Command {
               $metadata['sizes'][$name]['file'];
               $thumbnail_path = $file_path.'/'.$thumbnail['file'];
 
-              $ascii_thumbnail = Sanitizer::remove_accents($thumbnail['file']);
+              $ascii_thumbnail = Sanitizer::remove_accents( $thumbnail['file'], $assoc_args['sanitize']);
 
               // Update metadata on thumbnail so we can push it back to database
               $metadata['sizes'][$name]['file'] = $ascii_thumbnail;
