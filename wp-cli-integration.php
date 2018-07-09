@@ -171,43 +171,48 @@ class Sanitize_Command extends WP_CLI_Command {
             }
           }
 
-          // Replace thumbnails too
-          $file_path = dirname($full_path);
-          $metadata = wp_get_attachment_metadata($upload->ID);
+          // Only process thumbnails for image attachments
+          if ( wp_attachment_is_image( $upload->ID ) ) {
 
-          // Correct main file for later usage
-          $ascii_file = Sanitizer::remove_accents( $metadata['file'], $assoc_args['sanitize'] );
-          $metadata['file'] = $ascii_file;
+            // Replace thumbnails too
+            $file_path = dirname($full_path);
+            $metadata = wp_get_attachment_metadata($upload->ID);
 
-          // Usually this is image but if this is document instead it won't have different thumbnail sizes
-          if (isset($metadata['sizes'])) {
+            // Correct main file for later usage
+            $ascii_file = Sanitizer::remove_accents( $metadata['file'], $assoc_args['sanitize'] );
+            $metadata['file'] = $ascii_file;
 
-            foreach ($metadata['sizes'] as $name => $thumbnail) {
-              $metadata['sizes'][$name]['file'];
-              $thumbnail_path = $file_path.'/'.$thumbnail['file'];
+            // Usually this is image but if this is document instead it won't have different thumbnail sizes
+            if (isset($metadata['sizes'])) {
 
-              $ascii_thumbnail = Sanitizer::remove_accents( $thumbnail['file'], $assoc_args['sanitize']);
+              foreach ($metadata['sizes'] as $name => $thumbnail) {
+                $metadata['sizes'][$name]['file'];
+                $thumbnail_path = $file_path.'/'.$thumbnail['file'];
 
-              // Update metadata on thumbnail so we can push it back to database
-              $metadata['sizes'][$name]['file'] = $ascii_thumbnail;
+                $ascii_thumbnail = Sanitizer::remove_accents( $thumbnail['file'], $assoc_args['sanitize']);
 
-              $ascii_thumbnail_path = $file_path.'/'.$ascii_thumbnail;
+                // Update metadata on thumbnail so we can push it back to database
+                $metadata['sizes'][$name]['file'] = $ascii_thumbnail;
 
-              WP_CLI::line("----> Checking thumbnail: {$thumbnail_path}");
+                $ascii_thumbnail_path = $file_path.'/'.$ascii_thumbnail;
 
-              if (! isset($assoc_args['dry-run']) ) {
-                $old_file = Sanitizer::rename_accented_files_in_any_form($thumbnail_path, $ascii_thumbnail_path);
-                if ($old_file) {
-                  WP_CLI::line("----> Replaced thumbnail: ".basename($old_file)." -> ".basename($ascii_thumbnail_path));
-                } else {
-                  WP_CLI::line("----> ERROR: File can't be found: ".basename($thumbnail_path));
+                WP_CLI::line("----> Checking thumbnail: {$thumbnail_path}");
+
+                if (! isset($assoc_args['dry-run']) ) {
+                  $old_file = Sanitizer::rename_accented_files_in_any_form($thumbnail_path, $ascii_thumbnail_path);
+                  if ($old_file) {
+                    WP_CLI::line("----> Replaced thumbnail: ".basename($old_file)." -> ".basename($ascii_thumbnail_path));
+                  } else {
+                    WP_CLI::line("----> ERROR: File can't be found: ".basename($thumbnail_path));
+                  }
                 }
               }
             }
-          }
 
-          // Serialize fixed metadata so that we can insert it back to database
-          $fixed_metadata = serialize($metadata);
+            // Serialize fixed metadata so that we can insert it back to database
+            $fixed_metadata = serialize($metadata);
+
+          }
 
           /**
            * Replace Database
