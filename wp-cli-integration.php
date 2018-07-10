@@ -171,16 +171,21 @@ class Sanitize_Command extends WP_CLI_Command {
             }
           }
 
+
+          // Correct main file for later usage, works for all file types
+          $ascii_file = Sanitizer::remove_accents( get_post_meta( $upload->ID, '_wp_attached_file', true ), $assoc_args['sanitize'] );
+
           // Replace thumbnails too
           $file_path = dirname($full_path);
           $metadata = wp_get_attachment_metadata($upload->ID);
 
-          // Correct main file for later usage
-          $ascii_file = Sanitizer::remove_accents( $metadata['file'], $assoc_args['sanitize'] );
-          $metadata['file'] = $ascii_file;
+          // Metadata is set for for images and PDFs that have image thumbnails generated (https://make.wordpress.org/core/2016/11/15/enhanced-pdf-support-4-7/)
+          if ( $metadata && isset($metadata['sizes']) ) {
 
-          // Usually this is image but if this is document instead it won't have different thumbnail sizes
-          if (isset($metadata['sizes'])) {
+            // 'file' is only set for image attachment, not PDFs with thumbnails
+            if ( wp_attachment_is_image($upload->ID) ) {
+              $metadata['file'] = $ascii_file;
+            }
 
             foreach ($metadata['sizes'] as $name => $thumbnail) {
               $metadata['sizes'][$name]['file'];
@@ -209,6 +214,7 @@ class Sanitize_Command extends WP_CLI_Command {
           // Serialize fixed metadata so that we can insert it back to database
           $fixed_metadata = serialize($metadata);
 
+
           /**
            * Replace Database
            */
@@ -226,9 +232,12 @@ class Sanitize_Command extends WP_CLI_Command {
             $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}postmeta SET meta_value = %s WHERE post_id=%d and meta_key='_wp_attached_file';",$ascii_file,$upload->ID);
             $wpdb->query($sql);
 
-            // Replace meta data like thumbnail fields
-            $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}postmeta SET meta_value = %s WHERE post_id=%d and meta_key='_wp_attachment_metadata';",$fixed_metadata,$upload->ID);
-            $wpdb->query($sql);
+            // Only update attachemnt metadata if it was changed
+            if ( isset($metadata['sizes']) ) {
+              // Replace meta data like thumbnail fields
+              $sql = $wpdb->prepare("UPDATE {$wpdb->prefix}postmeta SET meta_value = %s WHERE post_id=%d and meta_key='_wp_attachment_metadata';",$fixed_metadata,$upload->ID);
+              $wpdb->query($sql);
+            }
           }
 
           // Calculate remaining files
