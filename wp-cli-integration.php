@@ -157,7 +157,6 @@ class Sanitize_Command extends WP_CLI_Command {
 
           // Get full path for file and replace accents for the future filename
           $full_path = get_attached_file($upload->ID);
-          var_dump($full_path);
           $ascii_full_path = Sanitizer::remove_accents( $full_path, $assoc_args['sanitize'] );
 
           // Move the file
@@ -180,10 +179,13 @@ class Sanitize_Command extends WP_CLI_Command {
           $file_path = dirname($full_path);
           $metadata = wp_get_attachment_metadata($upload->ID);
 
-          // Usually this is image but if this is document instead it won't have different thumbnail sizes
+          // Metadata is set for for images and PDFs that have image thumbnails generated (https://make.wordpress.org/core/2016/11/15/enhanced-pdf-support-4-7/)
           if ( $metadata && isset($metadata['sizes']) ) {
 
-            $metadata['file'] = $ascii_file;
+            // 'file' is only set for image attachment, not PDFs with thumbnails
+            if ( wp_attachment_is_image($upload->ID) ) {
+              $metadata['file'] = $ascii_file;
+            }
 
             foreach ($metadata['sizes'] as $name => $thumbnail) {
               $metadata['sizes'][$name]['file'];
