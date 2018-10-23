@@ -26,7 +26,7 @@ OR add it into your `composer.json`:
 ```json
 {
   "require": {
-    "devgeniem/sanitize-accented-uploads": "*"
+    "devgeniem/wp-sanitize-accented-uploads": "*"
   },
   "extra": {
     "installer-paths": {
